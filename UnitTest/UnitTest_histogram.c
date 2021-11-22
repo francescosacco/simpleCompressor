@@ -28,6 +28,14 @@ void histogram_calculation_SET_checkDataCalc( void ) ;
 void histogram_calculation_RUN_checkDataCalc( void ) ;
 void histogram_calculation_CLEAN_checkDataCalc( void ) ;
 
+/**********
+ * Unit Test for histogram_generateTable(), Check data calculation.
+ **********/
+
+void histogram_generateTable_SET_checkDataCalc( void ) ;
+void histogram_generateTable_RUN_checkDataCalc( void ) ;
+void histogram_generateTable_CLEAN_checkDataCalc( void ) ;
+
 int main( void )
 {
     printf( "Unit Test for Histogram\n" ) ;
@@ -47,6 +55,14 @@ int main( void )
     histogram_calculation_SET_checkDataCalc() ;
     histogram_calculation_RUN_checkDataCalc() ;
     histogram_calculation_CLEAN_checkDataCalc() ;
+
+    /**********
+     * Unit Test for histogram_generateTable(), Check data calculation.
+     **********/
+
+    histogram_generateTable_SET_checkDataCalc() ;
+    histogram_generateTable_RUN_checkDataCalc() ;
+    histogram_generateTable_CLEAN_checkDataCalc() ;
 
     return( 0 ) ;
 }
@@ -188,6 +204,76 @@ void histogram_calculation_CLEAN_checkDataCalc( void )
     
     free( ( void * ) pDataChk ) ;
     free( ( void * ) pHist_dataCalcChk ) ;
+}
+
+/**********
+ * Unit Test for histogram_generateTable(), Check data calculation.
+ **********/
+
+uint8_t * pTabOut ;
+histogram_dataCalc_t * pTabHist ;
+size_t pTabHistSize ;
+
+void histogram_generateTable_SET_checkDataCalc( void )
+{
+    printf( "SET   - histogram_generateTable() - Check Data Calculation\n" ) ;
+    
+    pTabOut = ( uint8_t * ) malloc( 256 ) ;
+    if( ( uint8_t * ) NULL == pTabOut )
+    {
+        printf( "\t[ ERROR ] Error allocation data [%s,%d]\n" , __FILE__ , __LINE__ ) ;
+        exit( -1 ) ;
+    }
+
+    ( void ) memset( ( void * ) pTabOut , DATA_SIGNATURE , 256 ) ;
+
+    pTabHistSize = 256 * sizeof( histogram_dataCalc_t ) ;
+
+    pTabHist = ( histogram_dataCalc_t * ) malloc( pTabHistSize ) ;
+    if( ( histogram_dataCalc_t * ) NULL == pTabHist )
+    {
+        printf( "\t[ ERROR ] Error allocation data [%s,%d]\n" , __FILE__ , __LINE__ ) ;
+        free( pTabOut ) ;
+        exit( -1 ) ;
+    }
+    
+    for( uint16_t i = 0 ; i < 256 ; i++ )
+    {
+        pTabHist[ i ].data      = ( uint8_t  ) i ;
+        pTabHist[ i ].frequency = ( uint32_t ) i ;
+    }
+}
+
+void histogram_generateTable_RUN_checkDataCalc( void )
+{
+    printf( "RUN   - histogram_generateTable() - Check Data Calculation\n" ) ;
+    
+    histogram_generateTable( pTabHist , pTabOut ) ;
+
+    for( uint16_t i = 0 ; i < 256 ; i++ )
+    {
+        uint8_t expectedData ;
+        
+        expectedData = ( uint8_t ) ( 0xFF - i ) ;
+        
+        if( pTabOut[ i ] != expectedData )
+        {
+            printf( "\t[ ERROR ] Buffer is different than expected [%s,%d]\n" , __FILE__ , __LINE__ ) ;
+            free( ( void * ) pTabHist ) ;
+            free( ( void * ) pTabOut ) ;
+            exit( -1 ) ;
+        }
+    }
+
+    printf( "\t[  OK   ] Data calculation correct.\n" ) ;
+}
+
+void histogram_generateTable_CLEAN_checkDataCalc( void )
+{
+    printf( "CLEAN - histogram_generateTable() - Check Data Calculation\n" ) ;
+
+    free( ( void * ) pTabOut ) ;
+    free( ( void * ) pTabHist ) ;
 }
 
 /**********
