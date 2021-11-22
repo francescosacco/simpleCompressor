@@ -7,6 +7,9 @@ PATH_OBJ=./obj
 histogram.o:
 	$(CC) -c $(PATH_SRC)/histogram.c -o $(PATH_OBJ)/histogram.o $(CFLAGS)
 
+compressor.o:
+	$(CC) -c $(PATH_SRC)/compressor.c -o $(PATH_OBJ)/compressor.o $(CFLAGS)
+
 UnitTest_histogram.o:
 	$(CC) -c $(PATH_UT)/UnitTest_histogram.c -o $(PATH_OBJ)/UnitTest_histogram.o $(CFLAGS)
 

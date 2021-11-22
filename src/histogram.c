@@ -36,6 +36,12 @@ void histogram_calculation( uint8_t * bufferIn , size_t bufferSize , histogram_d
 
 void histogram_generateTable( histogram_dataCalc_t * histogram_dataCalc , uint8_t * tableOut )
 {
+    // Check null pointer.
+    if( ( histogram_dataCalc == ( histogram_dataCalc_t * ) NULL ) || ( tableOut == ( uint8_t * ) NULL ) )
+    {
+        return ;
+    }
+    
     for( uint16_t i = 0 ; i < 256 ; i++ )
     {
         for( uint16_t j = 0 ; j < i ; j++ )
