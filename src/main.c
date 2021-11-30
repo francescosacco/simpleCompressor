@@ -75,7 +75,7 @@ int main( int argc , char * argv[] )
         printf( "\t\t%02Xh  - %8u | " , ( pHistogramDataCalc + i + 0 )->data , ( pHistogramDataCalc + i + 0 )->frequency ) ;
         printf(     "%02Xh  - %8u | " , ( pHistogramDataCalc + i + 1 )->data , ( pHistogramDataCalc + i + 1 )->frequency ) ;
         printf(     "%02Xh  - %8u | " , ( pHistogramDataCalc + i + 2 )->data , ( pHistogramDataCalc + i + 2 )->frequency ) ;
-        printf(     "%02Xh  - %8u\n" , ( pHistogramDataCalc + i + 3 )->data , ( pHistogramDataCalc + i + 3 )->frequency ) ;
+        printf(     "%02Xh  - %8u\n"  , ( pHistogramDataCalc + i + 3 )->data , ( pHistogramDataCalc + i + 3 )->frequency ) ;
     }
 
     printf( "\tGenerating conversion table...\n" ) ;
@@ -90,6 +90,15 @@ int main( int argc , char * argv[] )
     }
 
     histogram_generateTable( pHistogramDataCalc , pConvTable ) ;
+
+    printf( "\t\tFrom - To | From - To | From - To | From - To\n" ) ;
+    for( uint16_t i = 0 ; i < 256 ; i += 4 )
+    {
+        printf( "\t\t%02Xh - %02Xh | " , pConvTable[ i + 0 ] , ( uint8_t ) ( i + 0 ) ) ;
+        printf(     "%02Xh - %02Xh | " , pConvTable[ i + 1 ] , ( uint8_t ) ( i + 1 ) ) ;
+        printf(     "%02Xh - %02Xh | " , pConvTable[ i + 2 ] , ( uint8_t ) ( i + 2 ) ) ;
+        printf(     "%02Xh - %02Xh\n"  , pConvTable[ i + 3 ] , ( uint8_t ) ( i + 3 ) ) ;
+    }
 
 
     
