@@ -2,7 +2,7 @@
 
 compressedSize_t compressor( uint8_t dataIn , uint16_t * dataOut )
 {
-    if( dataOut == ( uint8_t * ) NULL )
+    if( dataOut == ( uint16_t * ) NULL )
     {
         return( compSize_error ) ;
     }
@@ -15,7 +15,7 @@ compressedSize_t compressor( uint8_t dataIn , uint16_t * dataOut )
 
     if( dataIn < 0x1E ) // Next 15 bytes, from F0h to FEh.
     {
-        *dataOut  = ( uint16_t ) dataIn
+        *dataOut  = ( uint16_t ) dataIn ;
         *dataOut += 0x00F0 - 0x000F ;
         return( compSize_fullByte ) ;
     }
