@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h> // To use malloc() and free().
+#include <stdbool.h>
+#include <string.h> // To use strcmp().
 
 #include "histogram.h"
 #include "compressor.h"
@@ -8,8 +10,13 @@
 uint32_t fileSize( FILE * fileIn ) ;
 void writeFunction( uint8_t dataIn ) ;
 
+void verbose_histogram_8bits( bool verbose , histogram_dataCalc_t * pHistogram_dataCalc ) ;
+void verbose_convert_8bits( bool verbose , uint8_t * tableIn ) ;
+
 int main( int argc , char * argv[] )
 {
+    bool verbose = false ;
+    
     FILE * fileIn ;
     uint32_t fileInSize ;
 
@@ -25,9 +32,9 @@ int main( int argc , char * argv[] )
     printf( "Simple Compressor - github.com/francescosacco\n" ) ;
     
     // Check if there are a file input.
-    if( argc != 2 )
+    if( argc < 2 )
     {
-        printf( "\tUse: SimpleCompressor <file>\n\n" ) ;
+        printf( "\tUse: SimpleCompressor <file> [--verbose]\n\n" ) ;
         return( 0 ) ;
     }
 
@@ -37,7 +44,12 @@ int main( int argc , char * argv[] )
         printf( "\tError to open \"%s\"!\n" , argv[ 1 ] ) ;
         return( -1 ) ;
     }
-    
+
+    if( ( argc > 2 ) && ( strcmp( argv[ 2 ] , "--verbose" ) == 0 ) )
+    {
+        verbose = true ;
+    }
+
     fileInSize = fileSize( fileIn ) ;
     if( 0 == fileInSize )
     {
@@ -75,14 +87,7 @@ int main( int argc , char * argv[] )
 
     histogram_calculation_8bits( dataIn , ( size_t ) fileInSize , pHistogramDataCalc ) ;
 
-    printf( "\t\tData -    Bytes | Data -    Bytes | Data -    Bytes | Data -    Bytes\n" ) ;
-    for( uint16_t i = 0 ; i < 256 ; i += 4 )
-    {
-        printf( "\t\t%02Xh  - %8u | " , ( pHistogramDataCalc + i + 0 )->data , ( pHistogramDataCalc + i + 0 )->frequency ) ;
-        printf(     "%02Xh  - %8u | " , ( pHistogramDataCalc + i + 1 )->data , ( pHistogramDataCalc + i + 1 )->frequency ) ;
-        printf(     "%02Xh  - %8u | " , ( pHistogramDataCalc + i + 2 )->data , ( pHistogramDataCalc + i + 2 )->frequency ) ;
-        printf(     "%02Xh  - %8u\n"  , ( pHistogramDataCalc + i + 3 )->data , ( pHistogramDataCalc + i + 3 )->frequency ) ;
-    }
+    verbose_histogram_8bits( verbose , pHistogramDataCalc ) ;
 
     printf( "\tGenerating conversion table...\n" ) ;
 
@@ -97,14 +102,7 @@ int main( int argc , char * argv[] )
 
     histogram_generateTable_8bits( pHistogramDataCalc , pConvTable , NULL ) ;
 
-    printf( "\t\tFrom - To | From - To | From - To | From - To\n" ) ;
-    for( uint16_t i = 0 ; i < 256 ; i += 4 )
-    {
-        printf( "\t\t%02Xh - %02Xh | " , ( uint8_t ) ( i + 0 ) , pConvTable[ i + 0 ] ) ;
-        printf(     "%02Xh - %02Xh | " , ( uint8_t ) ( i + 1 ) , pConvTable[ i + 1 ] ) ;
-        printf(     "%02Xh - %02Xh | " , ( uint8_t ) ( i + 2 ) , pConvTable[ i + 2 ] ) ;
-        printf(     "%02Xh - %02Xh\n"  , ( uint8_t ) ( i + 3 ) , pConvTable[ i + 3 ] ) ;
-    }
+    verbose_convert_8bits( verbose , pConvTable ) ;
 
     printf( "\tCompressing data...\n" ) ;
 
@@ -176,6 +174,39 @@ uint32_t fileSize( FILE * fileIn )
 
 void writeFunction( uint8_t dataIn )
 {
-    static uint32_t count = 0 ;
-    printf( "\t\twriteFunction( [%08Xh] <- %02Xh )\n" , count++ , dataIn ) ;
+    ( void ) dataIn ;
+}
+
+void verbose_histogram_8bits( bool verbose , histogram_dataCalc_t * pHistogram_dataCalc )
+{
+    if( false == verbose )
+    {
+        return ;
+    }
+
+    printf( "\t\tData -    Bytes | Data -    Bytes | Data -    Bytes | Data -    Bytes\n" ) ;
+    for( uint16_t i = 0 ; i < 64 ; i++ )
+    {
+        printf( "\t\t%02Xh  - %8u | " , ( pHistogram_dataCalc + i +   0 )->data , ( pHistogram_dataCalc + i +   0 )->frequency ) ;
+        printf(     "%02Xh  - %8u | " , ( pHistogram_dataCalc + i +  64 )->data , ( pHistogram_dataCalc + i +  64 )->frequency ) ;
+        printf(     "%02Xh  - %8u | " , ( pHistogram_dataCalc + i + 128 )->data , ( pHistogram_dataCalc + i + 128 )->frequency ) ;
+        printf(     "%02Xh  - %8u\n"  , ( pHistogram_dataCalc + i + 192 )->data , ( pHistogram_dataCalc + i + 192 )->frequency ) ;
+    }
+}
+
+void verbose_convert_8bits( bool verbose , uint8_t * tableIn )
+{
+    if( false == verbose )
+    {
+        return ;
+    }
+
+    printf( "\t\tFrom - To | From - To | From - To | From - To\n" ) ;
+    for( uint16_t i = 0 ; i < 64 ; i++ )
+    {
+        printf( "\t\t%02Xh - %02Xh | " , ( uint8_t ) ( i +   0 ) , tableIn[ i +   0 ] ) ;
+        printf(     "%02Xh - %02Xh | " , ( uint8_t ) ( i +  64 ) , tableIn[ i +  64 ] ) ;
+        printf(     "%02Xh - %02Xh | " , ( uint8_t ) ( i + 128 ) , tableIn[ i + 128 ] ) ;
+        printf(     "%02Xh - %02Xh\n"  , ( uint8_t ) ( i + 192 ) , tableIn[ i + 192 ] ) ;
+    }
 }
