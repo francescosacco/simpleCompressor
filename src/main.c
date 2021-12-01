@@ -3,8 +3,10 @@
 #include <stdlib.h> // To use malloc() and free().
 
 #include "histogram.h"
+#include "compressor.h"
 
 uint32_t fileSize( FILE * fileIn ) ;
+void writeFunction( uint8_t dataIn ) ;
 
 int main( int argc , char * argv[] )
 {
@@ -15,8 +17,12 @@ int main( int argc , char * argv[] )
     
     histogram_dataCalc_t * pHistogramDataCalc ;
     uint8_t * pConvTable ;
+    
+    uint8_t * dataOut = NULL ;
+    uint32_t dataOutSize ;
+    uint32_t dataOutMaxSize ;
 
-    printf( "Simple Compressor - %s - github.com/francescosacco\n" , __DATE__ ) ;
+    printf( "Simple Compressor - github.com/francescosacco\n" ) ;
     
     // Check if there are a file input.
     if( argc != 2 )
@@ -24,7 +30,7 @@ int main( int argc , char * argv[] )
         printf( "\tUse: SimpleCompressor <file>\n\n" ) ;
         return( 0 ) ;
     }
-    
+
     fileIn = fopen( argv[ 1 ] , "rb" ) ;
     if( ( FILE * ) NULL == fileIn )
     {
@@ -67,7 +73,7 @@ int main( int argc , char * argv[] )
         return( -1 ) ;
     }
 
-    histogram_calculation( dataIn , ( size_t ) fileInSize , pHistogramDataCalc ) ;
+    histogram_calculation_8bits( dataIn , ( size_t ) fileInSize , pHistogramDataCalc ) ;
 
     printf( "\t\tData -    Bytes | Data -    Bytes | Data -    Bytes | Data -    Bytes\n" ) ;
     for( uint16_t i = 0 ; i < 256 ; i += 4 )
@@ -89,20 +95,48 @@ int main( int argc , char * argv[] )
         return( -1 ) ;
     }
 
-    histogram_generateTable( pHistogramDataCalc , pConvTable ) ;
+    histogram_generateTable_8bits( pHistogramDataCalc , pConvTable , NULL ) ;
 
     printf( "\t\tFrom - To | From - To | From - To | From - To\n" ) ;
     for( uint16_t i = 0 ; i < 256 ; i += 4 )
     {
-        printf( "\t\t%02Xh - %02Xh | " , pConvTable[ i + 0 ] , ( uint8_t ) ( i + 0 ) ) ;
-        printf(     "%02Xh - %02Xh | " , pConvTable[ i + 1 ] , ( uint8_t ) ( i + 1 ) ) ;
-        printf(     "%02Xh - %02Xh | " , pConvTable[ i + 2 ] , ( uint8_t ) ( i + 2 ) ) ;
-        printf(     "%02Xh - %02Xh\n"  , pConvTable[ i + 3 ] , ( uint8_t ) ( i + 3 ) ) ;
+        printf( "\t\t%02Xh - %02Xh | " , ( uint8_t ) ( i + 0 ) , pConvTable[ i + 0 ] ) ;
+        printf(     "%02Xh - %02Xh | " , ( uint8_t ) ( i + 1 ) , pConvTable[ i + 1 ] ) ;
+        printf(     "%02Xh - %02Xh | " , ( uint8_t ) ( i + 2 ) , pConvTable[ i + 2 ] ) ;
+        printf(     "%02Xh - %02Xh\n"  , ( uint8_t ) ( i + 3 ) , pConvTable[ i + 3 ] ) ;
     }
 
+    printf( "\tCompressing data...\n" ) ;
 
+    dataOutMaxSize = fileInSize * 2 ;
+    dataOut = ( uint8_t * ) malloc( ( size_t ) dataOutMaxSize ) ;
+    if( ( uint8_t * ) NULL == pConvTable )
+    {
+        free( ( void * ) pConvTable ) ;
+        free( ( void * ) pHistogramDataCalc ) ;
+        free( ( void * ) dataIn ) ;
+        printf( "\tError allocating Compressed Data Out!\n" ) ;
+        return( -1 ) ;
+    }
+
+    writeCompressed_handle_t writeComphandle ;
+    writeCompressed_init( &writeComphandle , writeFunction ) ;
+
+    for( uint32_t i = 0 ; i < fileInSize ; i++ )
+    {
+        uint8_t compSize ;
+        uint16_t dataOutComp ;
+        compSize = compressor_8to4( pConvTable[ dataIn[ i ] ] , &dataOutComp ) ;
+        
+        writeCompressed_data( dataOutComp , compSize , &writeComphandle ) ;
+    }
+    dataOutSize = writeCompressed_end( &writeComphandle ) ;
+
+    printf( "\t\tCompressed data is %8u bytes.\n" , dataOutSize ) ; 
+    printf( "\t\tOriginal file is   %8u bytes.\n" , fileInSize ) ;
+    printf( "\t\tCompression rate is %.03f%%.\n" , ( float ) dataOutSize * 100.0 / ( float ) fileInSize ) ;
     
-    
+    free( ( void * ) dataOut ) ;
     free( ( void * ) pConvTable ) ;
     free( ( void * ) pHistogramDataCalc ) ;
     free( ( void * ) dataIn ) ;
@@ -138,4 +172,10 @@ uint32_t fileSize( FILE * fileIn )
     ( void ) fsetpos( fileIn , &pos ) ;
     
     return( ret ) ;
+}
+
+void writeFunction( uint8_t dataIn )
+{
+    static uint32_t count = 0 ;
+    printf( "\t\twriteFunction( [%08Xh] <- %02Xh )\n" , count++ , dataIn ) ;
 }
