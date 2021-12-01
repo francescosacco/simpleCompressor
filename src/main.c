@@ -11,6 +11,7 @@ uint32_t fileSize( FILE * fileIn ) ;
 void writeFunction( uint8_t dataIn ) ;
 
 void verbose_histogram_8bits( bool verbose , histogram_dataCalc_t * pHistogram_dataCalc ) ;
+void verbose_convert_8bits( bool verbose , uint8_t * tableIn ) ;
 
 int main( int argc , char * argv[] )
 {
@@ -101,14 +102,7 @@ int main( int argc , char * argv[] )
 
     histogram_generateTable_8bits( pHistogramDataCalc , pConvTable , NULL ) ;
 
-    printf( "\t\tFrom - To | From - To | From - To | From - To\n" ) ;
-    for( uint16_t i = 0 ; i < 256 ; i += 4 )
-    {
-        printf( "\t\t%02Xh - %02Xh | " , ( uint8_t ) ( i + 0 ) , pConvTable[ i + 0 ] ) ;
-        printf(     "%02Xh - %02Xh | " , ( uint8_t ) ( i + 1 ) , pConvTable[ i + 1 ] ) ;
-        printf(     "%02Xh - %02Xh | " , ( uint8_t ) ( i + 2 ) , pConvTable[ i + 2 ] ) ;
-        printf(     "%02Xh - %02Xh\n"  , ( uint8_t ) ( i + 3 ) , pConvTable[ i + 3 ] ) ;
-    }
+    verbose_convert_8bits( verbose , pConvTable ) ;
 
     printf( "\tCompressing data...\n" ) ;
 
@@ -180,8 +174,7 @@ uint32_t fileSize( FILE * fileIn )
 
 void writeFunction( uint8_t dataIn )
 {
-    static uint32_t count = 0 ;
-    printf( "\t\twriteFunction( [%08Xh] <- %02Xh )\n" , count++ , dataIn ) ;
+    ( void ) dataIn ;
 }
 
 void verbose_histogram_8bits( bool verbose , histogram_dataCalc_t * pHistogram_dataCalc )
@@ -192,11 +185,28 @@ void verbose_histogram_8bits( bool verbose , histogram_dataCalc_t * pHistogram_d
     }
 
     printf( "\t\tData -    Bytes | Data -    Bytes | Data -    Bytes | Data -    Bytes\n" ) ;
-    for( uint16_t i = 0 ; i < 256 ; i += 4 )
+    for( uint16_t i = 0 ; i < 64 ; i++ )
     {
-        printf( "\t\t%02Xh  - %8u | " , ( pHistogram_dataCalc + i + 0 )->data , ( pHistogram_dataCalc + i + 0 )->frequency ) ;
-        printf(     "%02Xh  - %8u | " , ( pHistogram_dataCalc + i + 1 )->data , ( pHistogram_dataCalc + i + 1 )->frequency ) ;
-        printf(     "%02Xh  - %8u | " , ( pHistogram_dataCalc + i + 2 )->data , ( pHistogram_dataCalc + i + 2 )->frequency ) ;
-        printf(     "%02Xh  - %8u\n"  , ( pHistogram_dataCalc + i + 3 )->data , ( pHistogram_dataCalc + i + 3 )->frequency ) ;
+        printf( "\t\t%02Xh  - %8u | " , ( pHistogram_dataCalc + i +   0 )->data , ( pHistogram_dataCalc + i +   0 )->frequency ) ;
+        printf(     "%02Xh  - %8u | " , ( pHistogram_dataCalc + i +  64 )->data , ( pHistogram_dataCalc + i +  64 )->frequency ) ;
+        printf(     "%02Xh  - %8u | " , ( pHistogram_dataCalc + i + 128 )->data , ( pHistogram_dataCalc + i + 128 )->frequency ) ;
+        printf(     "%02Xh  - %8u\n"  , ( pHistogram_dataCalc + i + 192 )->data , ( pHistogram_dataCalc + i + 192 )->frequency ) ;
+    }
+}
+
+void verbose_convert_8bits( bool verbose , uint8_t * tableIn )
+{
+    if( false == verbose )
+    {
+        return ;
+    }
+
+    printf( "\t\tFrom - To | From - To | From - To | From - To\n" ) ;
+    for( uint16_t i = 0 ; i < 64 ; i++ )
+    {
+        printf( "\t\t%02Xh - %02Xh | " , ( uint8_t ) ( i +   0 ) , tableIn[ i +   0 ] ) ;
+        printf(     "%02Xh - %02Xh | " , ( uint8_t ) ( i +  64 ) , tableIn[ i +  64 ] ) ;
+        printf(     "%02Xh - %02Xh | " , ( uint8_t ) ( i + 128 ) , tableIn[ i + 128 ] ) ;
+        printf(     "%02Xh - %02Xh\n"  , ( uint8_t ) ( i + 192 ) , tableIn[ i + 192 ] ) ;
     }
 }
