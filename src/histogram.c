@@ -1,6 +1,6 @@
 #include "histogram.h"
 
-void histogram_calculation( uint8_t * bufferIn , size_t bufferSize , histogram_dataCalc_t * histogram_dataCalc )
+void histogram_calculation_8bits( uint8_t * bufferIn , size_t bufferSize , histogram_dataCalc_t * histogram_dataCalc )
 {
     // Check null pointer.
     if( bufferIn == ( uint8_t * ) NULL )
@@ -34,10 +34,10 @@ void histogram_calculation( uint8_t * bufferIn , size_t bufferSize , histogram_d
     }
 }
 
-void histogram_generateTable( histogram_dataCalc_t * histogram_dataCalc , uint8_t * tableOut )
+void histogram_generateTable_8bits( histogram_dataCalc_t * histogram_dataCalc , uint8_t * convert , uint8_t * unConvert )
 {
     // Check null pointer.
-    if( ( histogram_dataCalc == ( histogram_dataCalc_t * ) NULL ) || ( tableOut == ( uint8_t * ) NULL ) )
+    if( histogram_dataCalc == ( histogram_dataCalc_t * ) NULL )
     {
         return ;
     }
@@ -66,6 +66,58 @@ void histogram_generateTable( histogram_dataCalc_t * histogram_dataCalc , uint8_
     // Move just the organized data list to the output.
     for( uint16_t i = 0 ; i < 256 ; i++ )
     {
-        tableOut[ i ] = histogram_dataCalc[ i ].data ;
+        if( convert != ( uint8_t * ) NULL )
+        {
+            convert[ histogram_dataCalc[ i ].data ] = ( uint8_t ) i ;
+        }
+
+        if( unConvert != ( uint8_t * ) NULL )
+        {
+            unConvert[ i ] = histogram_dataCalc[ i ].data ;
+        }
+    }
+}
+
+void histogram_calculation_4bits( uint8_t * bufferIn , size_t bufferSize , histogram_dataCalc_t * histogram_dataCalc )
+{
+    // Check null pointer.
+    if( bufferIn == ( uint8_t * ) NULL )
+    {
+        return ;
+    }
+    
+    // Check null pointer.
+    if( histogram_dataCalc == ( histogram_dataCalc_t * ) NULL )
+    {
+        return ;
+    }
+    
+    // Check zero size.
+    if( bufferSize == 0 )
+    {
+        return ;
+    }
+
+    // Initialize output buffer.
+    for( uint8_t i = 0 ; i < 16 ; i++ )
+    {
+        histogram_dataCalc[ i ].data = i ;
+        histogram_dataCalc[ i ].frequency = 0 ;
+    }
+
+    // Calculate the frequency of each data.
+    for( size_t count = 0 ; count < bufferSize ; count++ )
+    {
+        uint8_t dataIndex ;
+
+        dataIndex = bufferIn[ count ] ;
+        dataIndex >>= 4 ;
+
+        histogram_dataCalc[ dataIndex ].frequency++ ;
+
+        dataIndex = bufferIn[ count ] ;
+        dataIndex &= 0x0F ;
+        
+        histogram_dataCalc[ dataIndex ].frequency++ ;
     }
 }

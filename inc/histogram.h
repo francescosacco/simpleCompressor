@@ -14,8 +14,10 @@ typedef struct _HISTOGRAM_DATACALC_T_
     uint32_t frequency ;
 } histogram_dataCalc_t ;
 
-void histogram_calculation( uint8_t * bufferIn , size_t bufferSize , histogram_dataCalc_t * histogram_dataCalc ) ;
-void histogram_generateTable( histogram_dataCalc_t * histogram_dataCalc , uint8_t * tableOut ) ;
+void histogram_calculation_8bits( uint8_t * bufferIn , size_t bufferSize , histogram_dataCalc_t * histogram_dataCalc ) ;
+void histogram_generateTable_8bits( histogram_dataCalc_t * histogram_dataCalc , uint8_t * convert , uint8_t * unConvert ) ;
+
+void histogram_calculation_4bits( uint8_t * bufferIn , size_t bufferSize , histogram_dataCalc_t * histogram_dataCalc ) ;
 
 #ifdef __cplusplus
     }
