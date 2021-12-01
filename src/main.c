@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h> // To use malloc() and free().
+#include <stdbool.h>
+#include <string.h> // To use strcmp().
 
 #include "histogram.h"
 #include "compressor.h"
@@ -8,8 +10,12 @@
 uint32_t fileSize( FILE * fileIn ) ;
 void writeFunction( uint8_t dataIn ) ;
 
+void verbose_histogram_8bits( bool verbose , histogram_dataCalc_t * pHistogram_dataCalc ) ;
+
 int main( int argc , char * argv[] )
 {
+    bool verbose = false ;
+    
     FILE * fileIn ;
     uint32_t fileInSize ;
 
@@ -25,9 +31,9 @@ int main( int argc , char * argv[] )
     printf( "Simple Compressor - github.com/francescosacco\n" ) ;
     
     // Check if there are a file input.
-    if( argc != 2 )
+    if( argc < 2 )
     {
-        printf( "\tUse: SimpleCompressor <file>\n\n" ) ;
+        printf( "\tUse: SimpleCompressor <file> [--verbose]\n\n" ) ;
         return( 0 ) ;
     }
 
@@ -37,7 +43,12 @@ int main( int argc , char * argv[] )
         printf( "\tError to open \"%s\"!\n" , argv[ 1 ] ) ;
         return( -1 ) ;
     }
-    
+
+    if( ( argc > 2 ) && ( strcmp( argv[ 2 ] , "--verbose" ) == 0 ) )
+    {
+        verbose = true ;
+    }
+
     fileInSize = fileSize( fileIn ) ;
     if( 0 == fileInSize )
     {
@@ -75,14 +86,7 @@ int main( int argc , char * argv[] )
 
     histogram_calculation_8bits( dataIn , ( size_t ) fileInSize , pHistogramDataCalc ) ;
 
-    printf( "\t\tData -    Bytes | Data -    Bytes | Data -    Bytes | Data -    Bytes\n" ) ;
-    for( uint16_t i = 0 ; i < 256 ; i += 4 )
-    {
-        printf( "\t\t%02Xh  - %8u | " , ( pHistogramDataCalc + i + 0 )->data , ( pHistogramDataCalc + i + 0 )->frequency ) ;
-        printf(     "%02Xh  - %8u | " , ( pHistogramDataCalc + i + 1 )->data , ( pHistogramDataCalc + i + 1 )->frequency ) ;
-        printf(     "%02Xh  - %8u | " , ( pHistogramDataCalc + i + 2 )->data , ( pHistogramDataCalc + i + 2 )->frequency ) ;
-        printf(     "%02Xh  - %8u\n"  , ( pHistogramDataCalc + i + 3 )->data , ( pHistogramDataCalc + i + 3 )->frequency ) ;
-    }
+    verbose_histogram_8bits( verbose , pHistogramDataCalc ) ;
 
     printf( "\tGenerating conversion table...\n" ) ;
 
@@ -178,4 +182,21 @@ void writeFunction( uint8_t dataIn )
 {
     static uint32_t count = 0 ;
     printf( "\t\twriteFunction( [%08Xh] <- %02Xh )\n" , count++ , dataIn ) ;
+}
+
+void verbose_histogram_8bits( bool verbose , histogram_dataCalc_t * pHistogram_dataCalc )
+{
+    if( false == verbose )
+    {
+        return ;
+    }
+
+    printf( "\t\tData -    Bytes | Data -    Bytes | Data -    Bytes | Data -    Bytes\n" ) ;
+    for( uint16_t i = 0 ; i < 256 ; i += 4 )
+    {
+        printf( "\t\t%02Xh  - %8u | " , ( pHistogram_dataCalc + i + 0 )->data , ( pHistogram_dataCalc + i + 0 )->frequency ) ;
+        printf(     "%02Xh  - %8u | " , ( pHistogram_dataCalc + i + 1 )->data , ( pHistogram_dataCalc + i + 1 )->frequency ) ;
+        printf(     "%02Xh  - %8u | " , ( pHistogram_dataCalc + i + 2 )->data , ( pHistogram_dataCalc + i + 2 )->frequency ) ;
+        printf(     "%02Xh  - %8u\n"  , ( pHistogram_dataCalc + i + 3 )->data , ( pHistogram_dataCalc + i + 3 )->frequency ) ;
+    }
 }
