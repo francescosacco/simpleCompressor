@@ -18,6 +18,7 @@ void histogram_calculation_8bits( uint8_t * bufferIn , size_t bufferSize , histo
 void histogram_generateTable_8bits( histogram_dataCalc_t * histogram_dataCalc , uint8_t * convert , uint8_t * unConvert ) ;
 
 void histogram_calculation_4bits( uint8_t * bufferIn , size_t bufferSize , histogram_dataCalc_t * histogram_dataCalc ) ;
+void histogram_generateTable_4bits( histogram_dataCalc_t * histogram_dataCalc , uint8_t * convert , uint8_t * unConvert ) ;
 
 #ifdef __cplusplus
     }

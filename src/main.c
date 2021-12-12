@@ -7,27 +7,31 @@
 #include "histogram.h"
 #include "compressor.h"
 
-uint32_t fileSize( FILE * fileIn ) ;
+size_t dataInSize = 0 ;
+uint8_t * dataIn = NULL ;
+histogram_dataCalc_t * pHistCalc = NULL ;
+uint8_t * pConvTable = NULL ;
+
+size_t fileSize( FILE * fileIn ) ;
+
+bool allocateMemory_load( const char * fileName ) ;
+void freeMemory( void ) ;
+
 void writeFunction( uint8_t dataIn ) ;
 
+void verbose_allocAndLoad( bool verbose , const char * fileName , size_t fileSize ) ;
 void verbose_histogram_8bits( bool verbose , histogram_dataCalc_t * pHistogram_dataCalc ) ;
 void verbose_convert_8bits( bool verbose , uint8_t * tableIn ) ;
+void verbose_histogram_4bits( bool verbose , histogram_dataCalc_t * pHistogram_dataCalc ) ;
+void verbose_convert_4bits( bool verbose , uint8_t * tableIn ) ;
 
 int main( int argc , char * argv[] )
 {
     bool verbose = false ;
+    bool allocLoad = false ;
     
-    FILE * fileIn ;
-    uint32_t fileInSize ;
-
-    uint8_t * dataIn = NULL ;
-    
-    histogram_dataCalc_t * pHistogramDataCalc ;
-    uint8_t * pConvTable ;
-    
-    uint8_t * dataOut = NULL ;
+    writeCompressed_handle_t writeComphandle ;
     uint32_t dataOutSize ;
-    uint32_t dataOutMaxSize ;
 
     printf( "Simple Compressor - github.com/francescosacco\n" ) ;
     
@@ -38,113 +42,58 @@ int main( int argc , char * argv[] )
         return( 0 ) ;
     }
 
-    fileIn = fopen( argv[ 1 ] , "rb" ) ;
-    if( ( FILE * ) NULL == fileIn )
-    {
-        printf( "\tError to open \"%s\"!\n" , argv[ 1 ] ) ;
-        return( -1 ) ;
-    }
-
     if( ( argc > 2 ) && ( strcmp( argv[ 2 ] , "--verbose" ) == 0 ) )
     {
         verbose = true ;
     }
 
-    fileInSize = fileSize( fileIn ) ;
-    if( 0 == fileInSize )
+    printf( "\tLoading memory...\n" ) ;
+    allocLoad = allocateMemory_load( argv[ 1 ] ) ;
+    if( false == allocLoad )
     {
-        fclose( fileIn ) ;
-        printf( "\tFile \"%s\" has size zero!\n" , argv[ 1 ] ) ;
-        return( -1 ) ;
-    }
-    
-    dataIn = ( uint8_t * ) malloc( ( size_t ) fileInSize ) ;
-    if( ( uint8_t * ) NULL == dataIn )
-    {
-        fclose( fileIn ) ;
-        printf( "\tError to alloc %u size!\n" , fileInSize ) ;
-        return( -1 ) ;
-    }
-    
-    printf( "\tLoading \"%s\"... " , argv[ 1 ] ) ;
-    for( uint32_t i = 0 ; i < fileInSize ; i++ )
-    {
-        dataIn[ i ] = ( uint8_t ) getc( fileIn ) ;
-    }
-    printf( "%u Bytes.\n" , fileInSize ) ;
-
-    fclose( fileIn ) ;
-    fileIn = ( FILE * ) NULL ;
-
-    printf( "\tCalculating histogram...\n" ) ;
-    pHistogramDataCalc = ( histogram_dataCalc_t * ) malloc( 256 * sizeof( histogram_dataCalc_t ) ) ;
-    if( ( histogram_dataCalc_t * ) NULL == pHistogramDataCalc )
-    {
-        free( ( void * ) dataIn ) ;
-        printf( "\tError allocating histogram!\n" ) ;
         return( -1 ) ;
     }
 
-    histogram_calculation_8bits( dataIn , ( size_t ) fileInSize , pHistogramDataCalc ) ;
+    /****************************
+     * 8 TO 4
+     ****************************/
 
-    verbose_histogram_8bits( verbose , pHistogramDataCalc ) ;
+    verbose_allocAndLoad( verbose , argv[ 1 ] , dataInSize ) ;
 
-    printf( "\tGenerating conversion table...\n" ) ;
+    printf( "\tCalculating histogram 8bits...\n" ) ;
+    histogram_calculation_8bits( dataIn , dataInSize , pHistCalc ) ;
+    verbose_histogram_8bits( verbose , pHistCalc ) ;
 
-    pConvTable = ( uint8_t * ) malloc( 256 ) ;
-    if( ( uint8_t * ) NULL == pConvTable )
-    {
-        free( ( void * ) pHistogramDataCalc ) ;
-        free( ( void * ) dataIn ) ;
-        printf( "\tError allocating Convertion Table!\n" ) ;
-        return( -1 ) ;
-    }
-
-    histogram_generateTable_8bits( pHistogramDataCalc , pConvTable , NULL ) ;
-
+    printf( "\tGenerating conversion table 8bits...\n" ) ;
+    histogram_generateTable_8bits( pHistCalc , pConvTable , NULL ) ;
     verbose_convert_8bits( verbose , pConvTable ) ;
 
-    printf( "\tCompressing data...\n" ) ;
-
-    dataOutMaxSize = fileInSize * 2 ;
-    dataOut = ( uint8_t * ) malloc( ( size_t ) dataOutMaxSize ) ;
-    if( ( uint8_t * ) NULL == pConvTable )
-    {
-        free( ( void * ) pConvTable ) ;
-        free( ( void * ) pHistogramDataCalc ) ;
-        free( ( void * ) dataIn ) ;
-        printf( "\tError allocating Compressed Data Out!\n" ) ;
-        return( -1 ) ;
-    }
-
-    writeCompressed_handle_t writeComphandle ;
+    printf( "\tCompressing data 8to4...\n" ) ;
     writeCompressed_init( &writeComphandle , writeFunction ) ;
 
-    for( uint32_t i = 0 ; i < fileInSize ; i++ )
+    for( size_t i = 0 ; i < dataInSize ; i++ )
     {
         uint8_t compSize ;
         uint16_t dataOutComp ;
+
         compSize = compressor_8to4( pConvTable[ dataIn[ i ] ] , &dataOutComp ) ;
-        
+
         writeCompressed_data( dataOutComp , compSize , &writeComphandle ) ;
     }
     dataOutSize = writeCompressed_end( &writeComphandle ) ;
 
     printf( "\t\tCompressed data is %8u bytes.\n" , dataOutSize ) ; 
-    printf( "\t\tOriginal file is   %8u bytes.\n" , fileInSize ) ;
-    printf( "\t\tCompression rate is %.03f%%.\n" , ( float ) dataOutSize * 100.0 / ( float ) fileInSize ) ;
-    
-    free( ( void * ) dataOut ) ;
-    free( ( void * ) pConvTable ) ;
-    free( ( void * ) pHistogramDataCalc ) ;
-    free( ( void * ) dataIn ) ;
+    printf( "\t\tOriginal file is   %8u bytes.\n" , ( uint32_t ) dataInSize ) ;
+    printf( "\t\tCompression rate is %.03f%%.\n" , ( float ) dataOutSize * 100.0 / ( float ) dataInSize ) ;
+
+    freeMemory() ;
     
     return( 0 ) ;
 }
 
-uint32_t fileSize( FILE * fileIn )
+size_t fileSize( FILE * fileIn )
 {
-    uint32_t ret = 0 ;
+    size_t ret = 0 ;
     fpos_t pos ;
     int fPosRet ;
     
@@ -160,12 +109,7 @@ uint32_t fileSize( FILE * fileIn )
         return( ret ) ;
     }
     
-    ret = ( uint32_t ) ftell( fileIn ) ;
-    if( ret == 0xFFFFFFFF )
-    {
-        ret = 0 ;
-        return( ret ) ;
-    }
+    ret = ( size_t ) ftell( fileIn ) ;
 
     ( void ) fsetpos( fileIn , &pos ) ;
     
@@ -175,6 +119,16 @@ uint32_t fileSize( FILE * fileIn )
 void writeFunction( uint8_t dataIn )
 {
     ( void ) dataIn ;
+}
+
+void verbose_allocAndLoad( bool verbose , const char * fileName , size_t fileSize )
+{
+    if( false == verbose )
+    {
+        return ;
+    }
+
+    printf( "\t\tFile \"%s\" loaded, %u bytes.\n" , fileName , ( uint32_t ) fileSize ) ;
 }
 
 void verbose_histogram_8bits( bool verbose , histogram_dataCalc_t * pHistogram_dataCalc )
@@ -209,4 +163,100 @@ void verbose_convert_8bits( bool verbose , uint8_t * tableIn )
         printf(     "%02Xh - %02Xh | " , ( uint8_t ) ( i + 128 ) , tableIn[ i + 128 ] ) ;
         printf(     "%02Xh - %02Xh\n"  , ( uint8_t ) ( i + 192 ) , tableIn[ i + 192 ] ) ;
     }
+}
+
+void verbose_histogram_4bits( bool verbose , histogram_dataCalc_t * pHistogram_dataCalc )
+{
+    if( false == verbose )
+    {
+        return ;
+    }
+
+    printf( "\t\tData -   Bytes | Data -   Bytes | Data -   Bytes | Data -   Bytes\n" ) ;
+    for( uint16_t i = 0 ; i < 4 ; i++ )
+    {
+        printf( "\t\t%1Xh  - %8u | " , ( pHistogram_dataCalc + i +  0 )->data , ( pHistogram_dataCalc + i +  0 )->frequency ) ;
+        printf(     "%1Xh  - %8u | " , ( pHistogram_dataCalc + i +  4 )->data , ( pHistogram_dataCalc + i +  4 )->frequency ) ;
+        printf(     "%1Xh  - %8u | " , ( pHistogram_dataCalc + i +  8 )->data , ( pHistogram_dataCalc + i +  8 )->frequency ) ;
+        printf(     "%1Xh  - %8u\n"  , ( pHistogram_dataCalc + i + 12 )->data , ( pHistogram_dataCalc + i + 12 )->frequency ) ;
+    }
+}
+
+void verbose_convert_4bits( bool verbose , uint8_t * tableIn )
+{
+    if( false == verbose )
+    {
+        return ;
+    }
+
+    printf( "\t\tFrom To | From To | From To | From To\n" ) ;
+    for( uint16_t i = 0 ; i < 4 ; i++ )
+    {
+        printf( "\t\t%1Xh - %1Xh | " , ( uint8_t ) ( i +  0 ) , tableIn[ i +  0 ] ) ;
+        printf(     "%1Xh - %1Xh | " , ( uint8_t ) ( i +  4 ) , tableIn[ i +  4 ] ) ;
+        printf(     "%1Xh - %1Xh | " , ( uint8_t ) ( i +  8 ) , tableIn[ i +  8 ] ) ;
+        printf(     "%1Xh - %1Xh\n"  , ( uint8_t ) ( i + 12 ) , tableIn[ i + 12 ] ) ;
+    }
+}
+
+bool allocateMemory_load( const char * fileName )
+{
+    FILE * fileIn ;
+    bool ret = false ;
+    
+    fileIn = fopen( fileName , "rb" ) ;
+    if( ( FILE * ) NULL == fileIn )
+    {
+        printf( "\tError to open \"%s\"!\n" , fileName ) ;
+        return( false ) ;
+    }
+
+    dataInSize = fileSize( fileIn ) ;
+
+    dataIn = ( uint8_t * ) malloc( dataInSize ) ;
+    if( ( uint8_t * ) NULL == dataIn )
+    {
+        printf( "\tError to alloc %u size!\n" , ( uint32_t ) dataInSize ) ;
+        goto errorLevel_1 ;
+    }
+
+    for( size_t i = 0 ; i < dataInSize ; i++ )
+    {
+        dataIn[ i ] = ( uint8_t ) getc( fileIn ) ;
+    }
+
+    pHistCalc = ( histogram_dataCalc_t * ) malloc( 256 * sizeof( histogram_dataCalc_t ) ) ;
+    if( ( histogram_dataCalc_t * ) NULL == pHistCalc )
+    {
+        printf( "\tError allocating histogram!\n" ) ;
+        goto errorLevel_2 ;
+    }
+
+    pConvTable = ( uint8_t * ) malloc( 256 * sizeof( uint8_t ) ) ;
+    if( ( uint8_t * ) NULL == pConvTable )
+    {
+        printf( "\tError allocating Convertion Table!\n" ) ;
+        goto errorLevel_3 ;
+    }
+
+    ret = true ;
+    goto errorLevel_1 ;
+
+    errorLevel_3:
+    free( ( void * ) pHistCalc ) ;
+
+    errorLevel_2:
+    free( ( void * ) dataIn ) ;
+
+    errorLevel_1:
+    fclose( fileIn ) ;
+    
+    return( ret ) ;
+}
+
+void freeMemory( void )
+{
+    free( ( void * ) dataIn ) ;
+    free( ( void * ) pHistCalc ) ;
+    free( ( void * ) pConvTable ) ;
 }
