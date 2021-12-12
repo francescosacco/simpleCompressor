@@ -69,7 +69,16 @@ int main( int argc , char * argv[] )
     verbose_convert_8bits( verbose , pConvTable ) ;
 
     printf( "\tCompressing data 8to4...\n" ) ;
+    if( verbose )
+    {
+        printf( "\t\twriteCompressed_init()\n" ) ;
+    }
     writeCompressed_init( &writeComphandle , writeFunction ) ;
+
+    if( verbose )
+    {
+        printf( "\t\twriteCompressed_data()\n" ) ;
+    }
 
     for( size_t i = 0 ; i < dataInSize ; i++ )
     {
@@ -79,6 +88,16 @@ int main( int argc , char * argv[] )
         compSize = compressor_8to4( pConvTable[ dataIn[ i ] ] , &dataOutComp ) ;
 
         writeCompressed_data( dataOutComp , compSize , &writeComphandle ) ;
+
+        if( verbose )
+        {
+            printf( "." ) ;
+        }
+    }
+    if( verbose )
+    {
+        printf( "\n" ) ;
+        printf( "\t\twriteCompressed_end()\n" ) ;
     }
     dataOutSize = writeCompressed_end( &writeComphandle ) ;
 
