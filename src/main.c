@@ -82,6 +82,8 @@ int main( int argc , char * argv[] )
 
     for( size_t i = 0 ; i < dataInSize ; i++ )
     {
+        static float verboseProgress = 10.0 ;
+
         uint8_t compSize ;
         uint16_t dataOutComp ;
 
@@ -91,12 +93,22 @@ int main( int argc , char * argv[] )
 
         if( verbose )
         {
-            printf( "." ) ;
+            float percentageCalc ;
+            
+            percentageCalc = ( float ) i ;
+            percentageCalc *= 100.0 ;
+            percentageCalc /= dataInSize ;
+
+            if( percentageCalc > verboseProgress )
+            {
+                printf( "\t\t%.3f%% - %u Bytes loaded\n" , percentageCalc , ( uint32_t ) i ) ;
+                verboseProgress += 10.0 ;
+            }
         }
     }
     if( verbose )
     {
-        printf( "\n" ) ;
+        printf( "\t\t%.3f%% - %u Bytes loaded\n" , 100.0 , ( uint32_t ) dataInSize ) ;
         printf( "\t\twriteCompressed_end()\n" ) ;
     }
     dataOutSize = writeCompressed_end( &writeComphandle ) ;
