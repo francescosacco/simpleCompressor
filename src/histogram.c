@@ -121,3 +121,47 @@ void histogram_calculation_4bits( uint8_t * bufferIn , size_t bufferSize , histo
         histogram_dataCalc[ dataIndex ].frequency++ ;
     }
 }
+
+void histogram_generateTable_4bits( histogram_dataCalc_t * histogram_dataCalc , uint8_t * convert , uint8_t * unConvert )
+{
+    // Check null pointer.
+    if( histogram_dataCalc == ( histogram_dataCalc_t * ) NULL )
+    {
+        return ;
+    }
+    
+    for( uint16_t i = 0 ; i < 16 ; i++ )
+    {
+        for( uint16_t j = 0 ; j < i ; j++ )
+        {
+            // If the data is bigger, swap the data.
+            if( histogram_dataCalc[ i ].frequency > histogram_dataCalc[ j ].frequency )
+            {
+                histogram_dataCalc_t histSwap ;
+
+                histSwap.data      = histogram_dataCalc[ i ].data ;
+                histSwap.frequency = histogram_dataCalc[ i ].frequency ;
+
+                histogram_dataCalc[ i ].data      = histogram_dataCalc[ j ].data ;
+                histogram_dataCalc[ i ].frequency = histogram_dataCalc[ j ].frequency ;
+
+                histogram_dataCalc[ j ].data      = histSwap.data ;
+                histogram_dataCalc[ j ].frequency = histSwap.frequency ;
+            }
+        }
+    }
+    
+    // Move just the organized data list to the output.
+    for( uint16_t i = 0 ; i < 16 ; i++ )
+    {
+        if( convert != ( uint8_t * ) NULL )
+        {
+            convert[ histogram_dataCalc[ i ].data ] = ( uint8_t ) i ;
+        }
+
+        if( unConvert != ( uint8_t * ) NULL )
+        {
+            unConvert[ i ] = histogram_dataCalc[ i ].data ;
+        }
+    }
+}
