@@ -54,7 +54,7 @@ uint8_t compressor_4to1( uint8_t dataIn , uint16_t * dataOut )
     }
 
     *dataOut = compressBlock[ dataIn & 0x0F ] ;
-    return( dataIn & 0x0F ) ;
+    return( ( dataIn & 0x0F ) + 1 ) ;
 }
 
 uint8_t compressor_4to3( uint8_t dataIn , uint16_t * dataOut )

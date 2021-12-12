@@ -60,15 +60,15 @@ int main( int argc , char * argv[] )
 
     verbose_allocAndLoad( verbose , argv[ 1 ] , dataInSize ) ;
 
-    printf( "\tCalculating histogram 8bits...\n" ) ;
-    histogram_calculation_8bits( dataIn , dataInSize , pHistCalc ) ;
-    verbose_histogram_8bits( verbose , pHistCalc ) ;
+    printf( "\tCalculating histogram 4bits...\n" ) ;
+    histogram_calculation_4bits( dataIn , dataInSize , pHistCalc ) ;
+    verbose_histogram_4bits( verbose , pHistCalc ) ;
 
-    printf( "\tGenerating conversion table 8bits...\n" ) ;
-    histogram_generateTable_8bits( pHistCalc , pConvTable , NULL ) ;
-    verbose_convert_8bits( verbose , pConvTable ) ;
+    printf( "\tGenerating conversion table 4bits...\n" ) ;
+    histogram_generateTable_4bits( pHistCalc , pConvTable , NULL ) ;
+    verbose_convert_4bits( verbose , pConvTable ) ;
 
-    printf( "\tCompressing data 8to4...\n" ) ;
+    printf( "\tCompressing data 4to1...\n" ) ;
     if( verbose )
     {
         printf( "\t\twriteCompressed_init()\n" ) ;
@@ -87,28 +87,26 @@ int main( int argc , char * argv[] )
         uint8_t compSize ;
         uint16_t dataOutComp ;
 
-        compSize = compressor_8to4( pConvTable[ dataIn[ i ] ] , &dataOutComp ) ;
+        compSize = compressor_4to1( pConvTable[ dataIn[ i ] >> 4 ] , &dataOutComp ) ;
 
         writeCompressed_data( dataOutComp , compSize , &writeComphandle ) ;
 
         if( verbose )
         {
-            float percentageCalc ;
-            
-            percentageCalc = ( float ) i ;
-            percentageCalc *= 100.0 ;
-            percentageCalc /= dataInSize ;
+            printf( "\t\twriteCompressed_data( %04Xh , %02Xh , func() )\n" , dataOutComp , compSize ) ;
+        }
 
-            if( percentageCalc > verboseProgress )
-            {
-                printf( "\t\t%.3f%% - %u Bytes loaded\n" , percentageCalc , ( uint32_t ) i ) ;
-                verboseProgress += 10.0 ;
-            }
+        compSize = compressor_4to1( pConvTable[ dataIn[ i ] & 0x0F ] , &dataOutComp ) ;
+
+        writeCompressed_data( dataOutComp , compSize , &writeComphandle ) ;
+
+        if( verbose )
+        {
+            printf( "\t\twriteCompressed_data( %04Xh , %02Xh , func() )\n" , dataOutComp , compSize ) ;
         }
     }
     if( verbose )
     {
-        printf( "\t\t%.3f%% - %u Bytes loaded\n" , 100.0 , ( uint32_t ) dataInSize ) ;
         printf( "\t\twriteCompressed_end()\n" ) ;
     }
     dataOutSize = writeCompressed_end( &writeComphandle ) ;
@@ -150,6 +148,7 @@ size_t fileSize( FILE * fileIn )
 void writeFunction( uint8_t dataIn )
 {
     ( void ) dataIn ;
+    printf( "\t\twriteFunction(%02Xh)\n" , dataIn ) ;
 }
 
 void verbose_allocAndLoad( bool verbose , const char * fileName , size_t fileSize )
