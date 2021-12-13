@@ -89,21 +89,23 @@ int main( int argc , char * argv[] )
 
         compSize = compressor_4to1( pConvTable[ dataIn[ i ] >> 4 ] , &dataOutComp ) ;
 
-        writeCompressed_data( dataOutComp , compSize , &writeComphandle ) ;
-
         if( verbose )
         {
+            printf( "\t\t%d = compressor_4to1( %02Xh -> %02Xh ,OUT -> %04Xh )\n" , compSize , dataIn[ i ] >> 4 , pConvTable[ dataIn[ i ] >> 4 ] , dataOutComp ) ;
             printf( "\t\twriteCompressed_data( %04Xh , %02Xh , func() )\n" , dataOutComp , compSize ) ;
         }
+
+        writeCompressed_data( dataOutComp , compSize , &writeComphandle ) ;
 
         compSize = compressor_4to1( pConvTable[ dataIn[ i ] & 0x0F ] , &dataOutComp ) ;
 
-        writeCompressed_data( dataOutComp , compSize , &writeComphandle ) ;
-
         if( verbose )
         {
+            printf( "\t\t%d = compressor_4to1( %02Xh -> %02Xh ,OUT -> %04Xh )\n" , compSize , dataIn[ i ] & 0x0F , pConvTable[ dataIn[ i ] & 0x0F ] , dataOutComp ) ;
             printf( "\t\twriteCompressed_data( %04Xh , %02Xh , func() )\n" , dataOutComp , compSize ) ;
         }
+
+        writeCompressed_data( dataOutComp , compSize , &writeComphandle ) ;
     }
     if( verbose )
     {
