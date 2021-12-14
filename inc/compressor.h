@@ -20,8 +20,10 @@ typedef struct _WRITECOMPRESSED_HANDLE_T_
     uint32_t finalSize ;
 } writeCompressed_handle_t ;
 
+uint8_t compressor_8to2( uint8_t dataIn , uint16_t * dataOut ) ;
 uint8_t compressor_8to4( uint8_t dataIn , uint16_t * dataOut ) ;
 uint8_t compressor_4to1( uint8_t dataIn , uint16_t * dataOut ) ;
+uint8_t compressor_4to2( uint8_t dataIn , uint16_t * dataOut ) ;
 
 void writeCompressed_init( writeCompressed_handle_t * pWriteHandle , writeFunction_t pWriteFuncIn ) ;
 void writeCompressed_data( uint16_t dataIn , uint8_t dataSize , writeCompressed_handle_t * pWriteHandle ) ;
