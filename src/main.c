@@ -23,6 +23,7 @@ void verbose_allocAndLoad( bool verbose , const char * fileName , size_t fileSiz
 void verbose_histogram_8bits( bool verbose , histogram_dataCalc_t * pHistogram_dataCalc ) ;
 void verbose_convert_8bits( bool verbose , uint8_t * tableIn ) ;
 void verbose_histogram_4bits( bool verbose , histogram_dataCalc_t * pHistogram_dataCalc ) ;
+void verbose_histogram_2bits( bool verbose , histogram_dataCalc_t * pHistogram_dataCalc ) ;
 void verbose_convert_4bits( bool verbose , uint8_t * tableIn ) ;
 
 int main( int argc , char * argv[] )
@@ -87,21 +88,14 @@ int main( int argc , char * argv[] )
         uint8_t compSize ;
         uint16_t dataOutComp ;
 
-        compSize = compressor_4to1( pConvTable[ dataIn[ i ] >> 4 ] , &dataOutComp ) ;
-
-        if( verbose )
-        {
-            printf( "\t\t%d = compressor_4to1( %02Xh -> %02Xh ,OUT -> %04Xh )\n" , compSize , dataIn[ i ] >> 4 , pConvTable[ dataIn[ i ] >> 4 ] , dataOutComp ) ;
-            printf( "\t\twriteCompressed_data( %04Xh , %02Xh , func() )\n" , dataOutComp , compSize ) ;
-        }
-
+        compSize = compressor_4to2( pConvTable[ dataIn[ i ] >> 4 ] , &dataOutComp ) ;
         writeCompressed_data( dataOutComp , compSize , &writeComphandle ) ;
 
-        compSize = compressor_4to1( pConvTable[ dataIn[ i ] & 0x0F ] , &dataOutComp ) ;
+        compSize = compressor_4to2( pConvTable[ dataIn[ i ] & 0x0F ] , &dataOutComp ) ;
 
         if( verbose )
         {
-            printf( "\t\t%d = compressor_4to1( %02Xh -> %02Xh ,OUT -> %04Xh )\n" , compSize , dataIn[ i ] & 0x0F , pConvTable[ dataIn[ i ] & 0x0F ] , dataOutComp ) ;
+            printf( "\t\t%d = compressor_8to2( %02Xh -> %02Xh ,OUT -> %04Xh )\n" , compSize , dataIn[ i ] >> 4 , pConvTable[ dataIn[ i ] >> 4 ] , dataOutComp ) ;
             printf( "\t\twriteCompressed_data( %04Xh , %02Xh , func() )\n" , dataOutComp , compSize ) ;
         }
 
@@ -150,7 +144,6 @@ size_t fileSize( FILE * fileIn )
 void writeFunction( uint8_t dataIn )
 {
     ( void ) dataIn ;
-    printf( "\t\twriteFunction(%02Xh)\n" , dataIn ) ;
 }
 
 void verbose_allocAndLoad( bool verbose , const char * fileName , size_t fileSize )
@@ -212,6 +205,20 @@ void verbose_histogram_4bits( bool verbose , histogram_dataCalc_t * pHistogram_d
         printf(     "%1Xh  - %8u | " , ( pHistogram_dataCalc + i +  8 )->data , ( pHistogram_dataCalc + i +  8 )->frequency ) ;
         printf(     "%1Xh  - %8u\n"  , ( pHistogram_dataCalc + i + 12 )->data , ( pHistogram_dataCalc + i + 12 )->frequency ) ;
     }
+}
+
+void verbose_histogram_2bits( bool verbose , histogram_dataCalc_t * pHistogram_dataCalc )
+{
+    if( false == verbose )
+    {
+        return ;
+    }
+
+    printf( "\t\tData -   Bytes | Data -   Bytes | Data -   Bytes | Data -   Bytes\n" ) ;
+    printf( "\t\t%1Xh  - %8u | " , ( pHistogram_dataCalc + 0 )->data , ( pHistogram_dataCalc + 0 )->frequency ) ;
+    printf(     "%1Xh  - %8u | " , ( pHistogram_dataCalc + 1 )->data , ( pHistogram_dataCalc + 1 )->frequency ) ;
+    printf(     "%1Xh  - %8u | " , ( pHistogram_dataCalc + 2 )->data , ( pHistogram_dataCalc + 2 )->frequency ) ;
+    printf(     "%1Xh  - %8u\n"  , ( pHistogram_dataCalc + 3 )->data , ( pHistogram_dataCalc + 3 )->frequency ) ;
 }
 
 void verbose_convert_4bits( bool verbose , uint8_t * tableIn )
