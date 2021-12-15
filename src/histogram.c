@@ -3,7 +3,7 @@
 void histogram_calculation( uint8_t * bufferIn , size_t bufferSize , eHistDataSize_t eDataSize , histogram_dataCalc_t * histogram_dataCalc )
 {
     uint32_t table_dataSize[] = { 4 , 16 , 256 , 65536 } ;
-    
+
     // Check null pointer.
     if( bufferIn == ( uint8_t * ) NULL )
     {

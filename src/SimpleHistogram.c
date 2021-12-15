@@ -20,7 +20,14 @@ int main( int argc , char * argv[] )
     bool cmd_dataSize = false ;
     char * cmd_dataSizeStr ;
     int cmd_dataSizeValue ;
-    
+
+    size_t tableSize ;
+    size_t histSize ;
+    eHistDataSize_t eHistSize ;
+    uint16_t * pConvTable ;
+    uint16_t * pUncConvTable ;
+    histogram_dataCalc_t * pHistCalc ;
+
     printf( "Simple Histogram - github.com/francescosacco\n" ) ;
 
     if( argc < 2 )
@@ -66,15 +73,51 @@ int main( int argc , char * argv[] )
         cmd_dataSizeValue = 8 ;
     }
     printf( "\tData size defined as %d bits.\n" , cmd_dataSizeValue ) ;
-    
-    
-    
-    
-    
-    
-    
-    
-    
+
+    switch( cmd_dataSizeValue )
+    {
+    case 2 :
+        tableSize = TABLE_2BITS_SIZE ;
+        histSize  = HISTOGRAM_2BITS_SIZE ;
+        eHistSize = eHistDataSize_2bits ;
+        break ;
+    case 4 :
+        tableSize = TABLE_4BITS_SIZE ;
+        histSize  = HISTOGRAM_4BITS_SIZE ;
+        eHistSize = eHistDataSize_4bits ;
+        break ;
+    case 16 :
+        tableSize = TABLE_16BITS_SIZE ;
+        histSize  = HISTOGRAM_16BITS_SIZE ;
+        eHistSize = eHistDataSize_16bits ;
+        break ;
+    case 8 :
+    default:
+        tableSize = TABLE_8BITS_SIZE ;
+        histSize  = HISTOGRAM_8BITS_SIZE ;
+        eHistSize = eHistDataSize_8bits ;
+        break ;
+    }
+
+    pConvTable    = ( uint16_t * ) malloc( tableSize ) ;
+    pUncConvTable = ( uint16_t * ) malloc( tableSize ) ;
+    pHistCalc     = ( histogram_dataCalc_t * ) malloc( histSize ) ;
+
+    if( ( ( uint16_t * ) NULL == pConvTable ) || ( ( uint16_t * ) NULL == pUncConvTable ) || ( ( histogram_dataCalc_t * ) NULL == pHistCalc ) )
+    {
+        printf( "\tError - Not possible alloc memory.\n" ) ;
+        return( -1 ) ;
+    }
+
+    // Calculating Histogram.
+    printf( "\tCalculating Histogram.\n" ) ;
+    histogram_calculation( pData , dataSize , eHistSize , pHistCalc ) ;
+    printf( "\tGenerating conversion tables.\n" ) ;
+    histogram_generateTable( pHistCalc , eHistSize , pConvTable , pUncConvTable ) ;
+
+    free( pConvTable    ) ;
+    free( pUncConvTable ) ;
+    free( pHistCalc     ) ;
 
     FileManager_freeFile( pData ) ;
     return( 0 ) ;
