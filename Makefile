@@ -4,17 +4,24 @@ PATH_SRC=./src
 PATH_UT=./UnitTest
 PATH_OBJ=./obj
 
-main.o:
-	$(CC) -c $(PATH_SRC)/main.c -o $(PATH_OBJ)/main.o $(CFLAGS)
+SimpleCompressor.o:
+	$(CC) -c $(PATH_SRC)/SimpleCompressor.c -o $(PATH_OBJ)/SimpleCompressor.o $(CFLAGS)
+
+SimpleHistogram.o:
+	$(CC) -c $(PATH_SRC)/SimpleHistogram.c -o $(PATH_OBJ)/SimpleHistogram.o $(CFLAGS)
 
 histogram.o:
 	$(CC) -c $(PATH_SRC)/histogram.c -o $(PATH_OBJ)/histogram.o $(CFLAGS)
 
+FileManager.o:
+	$(CC) -c $(PATH_SRC)/FileManager.c -o $(PATH_OBJ)/FileManager.o $(CFLAGS)
+
 compressor.o:
 	$(CC) -c $(PATH_SRC)/compressor.c -o $(PATH_OBJ)/compressor.o $(CFLAGS)
 
-all: main.o compressor.o histogram.o
-	$(CC) -o SimpleCompressor.exe $(PATH_OBJ)/main.o $(PATH_OBJ)/compressor.o $(PATH_OBJ)/histogram.o $(CFLAGS)
+all: SimpleCompressor.o SimpleHistogram.o compressor.o histogram.o FileManager.o
+	$(CC) -o SimpleCompressor.exe $(PATH_OBJ)/SimpleCompressor.o $(PATH_OBJ)/compressor.o $(PATH_OBJ)/histogram.o $(CFLAGS)
+	$(CC) -o SimpleHistogram.exe $(PATH_OBJ)/SimpleHistogram.o $(PATH_OBJ)/histogram.o $(PATH_OBJ)/FileManager.o $(CFLAGS)
 
 UnitTest_histogram.o:
 	$(CC) -c $(PATH_UT)/UnitTest_histogram.c -o $(PATH_OBJ)/UnitTest_histogram.o $(CFLAGS)
