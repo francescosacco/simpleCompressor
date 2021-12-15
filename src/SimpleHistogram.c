@@ -83,13 +83,23 @@ int main( int argc , char * argv[] )
 char * Arguments_findData( int argc , char * argv[] , const char * strIn )
 {
     char * dataFound = ( char * ) NULL ;
-    
+
     for( int i = 0 ; i < argc ; i++ )
     {
         dataFound = strstr( argv[ i ] , strIn ) ;
+        
         if( ( char * ) NULL != dataFound )
         {
-            dataFound += strlen( strIn ) ;
+            // Are there no data?
+            if( strlen( dataFound ) == strlen( strIn ) )
+            {
+                // Yes, there's no data.
+                dataFound = ( char * ) NULL ;
+            }
+            else
+            {
+                dataFound += strlen( strIn ) ;
+            }
             break ;
         }
     }
