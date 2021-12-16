@@ -66,3 +66,21 @@ size_t FileManager_fileSize( FILE * fileIn )
     
     return( ret ) ;
 }
+
+void FileManager( char * fileName , uint8_t * pData , size_t dataSize )
+{
+    FILE * filePtr ;
+    
+    filePtr = fopen( fileName , "wb" ) ;
+    if( ( FILE * ) NULL == filePtr )
+    {
+        return ;
+    }
+
+    for( size_t i = 0 ; i < dataSize ; i++ )
+    {
+        ( void ) putc( ( int ) pData[ i ] , filePtr ) ;
+    }
+
+    fclose( filePtr ) ;
+}
