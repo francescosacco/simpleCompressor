@@ -67,7 +67,7 @@ size_t FileManager_fileSize( FILE * fileIn )
     return( ret ) ;
 }
 
-void FileManager( char * fileName , uint8_t * pData , size_t dataSize )
+void FileManager_writeBlock( char * fileName , uint8_t * pData , size_t dataSize )
 {
     FILE * filePtr ;
     

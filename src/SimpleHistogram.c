@@ -8,6 +8,7 @@
 #include "FileManager.h"
 
 char * Arguments_findData( int argc , char * argv[] , const char * strIn ) ;
+void setFileName( char * strIn , char * strExt , char * strOut , size_t strOutSize ) ;
 
 int main( int argc , char * argv[] )
 {
@@ -16,6 +17,7 @@ int main( int argc , char * argv[] )
 
     bool cmd_outFile = false ;
     char * cmd_outFileName ;
+    char outFileName[ 64 ] ;
 
     bool cmd_dataSize = false ;
     char * cmd_dataSizeStr ;
@@ -32,7 +34,7 @@ int main( int argc , char * argv[] )
 
     if( argc < 2 )
     {
-        printf( "\tUse: SimpleHistogram <file name> [--output=file] [--datasize=2,4,8,16]\n" ) ;
+        printf( "\tUse: SimpleHistogram <file name> [--output=name] [--datasize=2,4,8,16]\n" ) ;
         return( 0 ) ;
     }
 
@@ -115,6 +117,18 @@ int main( int argc , char * argv[] )
     printf( "\tGenerating conversion tables.\n" ) ;
     histogram_generateTable( pHistCalc , eHistSize , pConvTable , pUncConvTable ) ;
 
+    if( cmd_outFile )
+    {
+        // Writting convertion table.
+        setFileName( cmd_outFileName , ".cta" , outFileName , sizeof( outFileName ) ) ;
+        printf( "\tWritting convertion table at \"%s\" file.\n" , outFileName ) ;
+        FileManager_writeBlock( outFileName , ( uint8_t * ) pConvTable , tableSize ) ;
+
+        setFileName( cmd_outFileName , ".uta" , outFileName , sizeof( outFileName ) ) ;
+        printf( "\tWritting unconvertion table at \"%s\" file.\n" , outFileName ) ;
+        FileManager_writeBlock( outFileName , ( uint8_t * ) pUncConvTable , tableSize ) ;
+    }
+
     free( pConvTable    ) ;
     free( pUncConvTable ) ;
     free( pHistCalc     ) ;
@@ -148,4 +162,28 @@ char * Arguments_findData( int argc , char * argv[] , const char * strIn )
     }
     
     return( dataFound ) ;
+}
+
+void setFileName( char * strIn , char * strExt , char * strOut , size_t strOutSize )
+{
+    size_t outSize ;
+    size_t extSize ;
+    
+    outSize = strlen( strIn ) ;
+    extSize = strlen( strExt ) ;
+    
+    if( extSize >= outSize )
+    {
+        strOut[ 0 ] = '\0' ;
+        return ;
+    }
+
+    if( outSize > ( strOutSize - extSize - 1 ) )
+    {
+        outSize = ( strOutSize - extSize - 1 ) ;
+    }
+
+    memset( strOut , '\0' , strOutSize ) ;
+    strncpy( strOut , strIn , outSize ) ;
+    strcpy( strOut + outSize , strExt ) ;
 }
