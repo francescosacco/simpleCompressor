@@ -10,7 +10,7 @@
 size_t dataInSize = 0 ;
 uint8_t * dataIn = NULL ;
 histogram_dataCalc_t * pHistCalc = NULL ;
-uint8_t * pConvTable = NULL ;
+uint16_t * pConvTable = NULL ;
 
 size_t fileSize( FILE * fileIn ) ;
 
@@ -24,7 +24,7 @@ void verbose_histogram_8bits( bool verbose , histogram_dataCalc_t * pHistogram_d
 void verbose_convert_8bits( bool verbose , uint8_t * tableIn ) ;
 void verbose_histogram_4bits( bool verbose , histogram_dataCalc_t * pHistogram_dataCalc ) ;
 void verbose_histogram_2bits( bool verbose , histogram_dataCalc_t * pHistogram_dataCalc ) ;
-void verbose_convert_4bits( bool verbose , uint8_t * tableIn ) ;
+void verbose_convert_4bits( bool verbose , uint16_t * tableIn ) ;
 
 int main( int argc , char * argv[] )
 {
@@ -62,11 +62,11 @@ int main( int argc , char * argv[] )
     verbose_allocAndLoad( verbose , argv[ 1 ] , dataInSize ) ;
 
     printf( "\tCalculating histogram 4bits...\n" ) ;
-    histogram_calculation_4bits( dataIn , dataInSize , pHistCalc ) ;
+    histogram_calculation( dataIn , dataInSize , eHistDataSize_4bits , pHistCalc ) ;
     verbose_histogram_4bits( verbose , pHistCalc ) ;
 
     printf( "\tGenerating conversion table 4bits...\n" ) ;
-    histogram_generateTable_4bits( pHistCalc , pConvTable , NULL ) ;
+    histogram_generateTable( pHistCalc , eHistDataSize_4bits , pConvTable , NULL ) ;
     verbose_convert_4bits( verbose , pConvTable ) ;
 
     printf( "\tCompressing data 4to1...\n" ) ;
@@ -221,7 +221,7 @@ void verbose_histogram_2bits( bool verbose , histogram_dataCalc_t * pHistogram_d
     printf(     "%1Xh  - %8u\n"  , ( pHistogram_dataCalc + 3 )->data , ( pHistogram_dataCalc + 3 )->frequency ) ;
 }
 
-void verbose_convert_4bits( bool verbose , uint8_t * tableIn )
+void verbose_convert_4bits( bool verbose , uint16_t * tableIn )
 {
     if( false == verbose )
     {
@@ -271,8 +271,8 @@ bool allocateMemory_load( const char * fileName )
         goto errorLevel_2 ;
     }
 
-    pConvTable = ( uint8_t * ) malloc( 256 * sizeof( uint8_t ) ) ;
-    if( ( uint8_t * ) NULL == pConvTable )
+    pConvTable = ( uint16_t * ) malloc( 256 * sizeof( uint16_t ) ) ;
+    if( ( uint16_t * ) NULL == pConvTable )
     {
         printf( "\tError allocating Convertion Table!\n" ) ;
         goto errorLevel_3 ;
