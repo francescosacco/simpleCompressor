@@ -8,12 +8,18 @@
 #include "FileManager.h"
 
 char * Arguments_findData( int argc , char * argv[] , const char * strIn ) ;
+char * Arguments_findArg( int argc , char * argv[] , const char * strIn ) ;
 void setFileName( char * strIn , char * strExt , char * strOut , size_t strOutSize ) ;
+void printHistogram( histogram_dataCalc_t * pHist , eHistDataSize_t eHistSize ) ;
+void printHistogramFile( histogram_dataCalc_t * pHist , eHistDataSize_t eHistSize , char * fileName ) ;
 
 int main( int argc , char * argv[] )
 {
     uint8_t * pData ;
     size_t dataSize ;
+
+    bool cmd_sorted = false ;
+    char * cmd_sortedTxt ;
 
     bool cmd_outFile = false ;
     char * cmd_outFileName ;
@@ -34,7 +40,7 @@ int main( int argc , char * argv[] )
 
     if( argc < 2 )
     {
-        printf( "\tUse: SimpleHistogram <file name> [--output=name] [--datasize=2,4,8,16]\n" ) ;
+        printf( "\tUse: SimpleHistogram <file name> [--output=name] [--datasize=2,4,8,16] [--sorted]\n" ) ;
         return( 0 ) ;
     }
 
@@ -76,6 +82,13 @@ int main( int argc , char * argv[] )
     }
     printf( "\tData size defined as %d bits.\n" , cmd_dataSizeValue ) ;
 
+    cmd_sortedTxt = Arguments_findArg( argc , argv , "--sorted" ) ;
+    cmd_sorted = ( ( char * ) NULL != cmd_sortedTxt ) ? ( true ) : ( false ) ;
+    if( cmd_sorted )
+    {
+        printf( "\tSort enabled.\n" ) ;
+    }
+
     switch( cmd_dataSizeValue )
     {
     case 2 :
@@ -113,9 +126,29 @@ int main( int argc , char * argv[] )
 
     // Calculating Histogram.
     printf( "\tCalculating Histogram.\n" ) ;
+    
     histogram_calculation( pData , dataSize , eHistSize , pHistCalc ) ;
-    printf( "\tGenerating conversion tables.\n" ) ;
-    histogram_generateTable( pHistCalc , eHistSize , pConvTable , pUncConvTable ) ;
+
+    if( cmd_sorted )
+    {
+        printf( "\tGenerating conversion tables.\n" ) ;
+        histogram_generateTable( pHistCalc , eHistSize , pConvTable , pUncConvTable ) ;
+
+        if( false == cmd_outFile )
+        {
+            printHistogram( pHistCalc , eHistSize ) ;
+        }
+    }
+    else
+    {
+        if( false == cmd_outFile )
+        {
+            printHistogram( pHistCalc , eHistSize ) ;
+        }
+
+        printf( "\tGenerating conversion tables.\n" ) ;
+        histogram_generateTable( pHistCalc , eHistSize , pConvTable , pUncConvTable ) ;
+    }
 
     if( cmd_outFile )
     {
@@ -124,9 +157,19 @@ int main( int argc , char * argv[] )
         printf( "\tWritting convertion table at \"%s\" file.\n" , outFileName ) ;
         FileManager_writeBlock( outFileName , ( uint8_t * ) pConvTable , tableSize ) ;
 
+        // Writting unconvertion table.
         setFileName( cmd_outFileName , ".uta" , outFileName , sizeof( outFileName ) ) ;
         printf( "\tWritting unconvertion table at \"%s\" file.\n" , outFileName ) ;
         FileManager_writeBlock( outFileName , ( uint8_t * ) pUncConvTable , tableSize ) ;
+
+        // Writting histogram table.
+        setFileName( cmd_outFileName , ".hta" , outFileName , sizeof( outFileName ) ) ;
+        printf( "\tWritting histogram table at \"%s\" file.\n" , outFileName ) ;
+        FileManager_writeBlock( outFileName , ( uint8_t * ) pHistCalc , histSize ) ;
+        
+        setFileName( cmd_outFileName , ".his" , outFileName , sizeof( outFileName ) ) ;
+        printf( "\tWritting histogram output at \"%s\" file.\n" , outFileName ) ;
+        printHistogramFile( pHistCalc , eHistSize , outFileName ) ;
     }
 
     free( pConvTable    ) ;
@@ -164,6 +207,23 @@ char * Arguments_findData( int argc , char * argv[] , const char * strIn )
     return( dataFound ) ;
 }
 
+char * Arguments_findArg( int argc , char * argv[] , const char * strIn )
+{
+    char * dataFound = ( char * ) NULL ;
+
+    for( int i = 0 ; i < argc ; i++ )
+    {
+        dataFound = strstr( argv[ i ] , strIn ) ;
+        
+        if( ( char * ) NULL != dataFound )
+        {
+            break ;
+        }
+    }
+    
+    return( dataFound ) ;
+}
+
 void setFileName( char * strIn , char * strExt , char * strOut , size_t strOutSize )
 {
     size_t outSize ;
@@ -186,4 +246,92 @@ void setFileName( char * strIn , char * strExt , char * strOut , size_t strOutSi
     memset( strOut , '\0' , strOutSize ) ;
     strncpy( strOut , strIn , outSize ) ;
     strcpy( strOut + outSize , strExt ) ;
+}
+
+void printHistogram( histogram_dataCalc_t * pHist , eHistDataSize_t eHistSize )
+{
+    
+    
+    uint32_t tableSize[] = { 4 , 16 , 256 , 65536 } ;
+
+    printf( "\n" ) ;
+
+    switch( eHistSize )
+    {
+    case eHistDataSize_2bits :
+    case eHistDataSize_4bits :
+        printf( "  Data   Frequency\n" ) ;
+        for( uint32_t i = 0 ; i < tableSize[ eHistSize ] ; i++ )
+        {
+            printf( "    %1Xh  %10u\n" , pHist[ i ].data , pHist[ i ].frequency ) ;
+        }
+        break ;
+    case eHistDataSize_8bits :
+        printf( "  Data   Frequency | Data   Frequency | Data   Frequency | Data   Frequency\n" ) ;
+        for( uint32_t i = 0 ; i < ( tableSize[ eHistSize ] / 4 ) ; i++ )
+        {
+            printf( "   %02Xh  %10u |" , pHist[ i       ].data , pHist[ i       ].frequency ) ;
+            printf(  "  %02Xh  %10u |" , pHist[ i +  64 ].data , pHist[ i +  64 ].frequency ) ;
+            printf(  "  %02Xh  %10u |" , pHist[ i + 128 ].data , pHist[ i + 128 ].frequency ) ;
+            printf(  "  %02Xh  %10u\n" , pHist[ i + 192 ].data , pHist[ i + 192 ].frequency ) ;
+        }
+        break ;
+    case eHistDataSize_16bits :
+        printf( "  Data   Frequency | Data   Frequency | Data   Frequency | Data   Frequency\n" ) ;
+        for( uint32_t i = 0 ; i < ( tableSize[ eHistSize ] / 4 ) ; i++ )
+        {
+            printf( "  %04Xh %10u |" , pHist[ i         ].data , pHist[ i         ].frequency ) ;
+            printf(  " %04Xh %10u |" , pHist[ i + 16384 ].data , pHist[ i + 16384 ].frequency ) ;
+            printf(  " %04Xh %10u |" , pHist[ i + 32768 ].data , pHist[ i + 32768 ].frequency ) ;
+            printf(  " %04Xh %10u\n" , pHist[ i + 49152 ].data , pHist[ i + 49152 ].frequency ) ;
+        }
+        break ;
+    }
+
+    printf( "\n" ) ;
+}
+
+void printHistogramFile( histogram_dataCalc_t * pHist , eHistDataSize_t eHistSize , char * fileName )
+{
+    uint32_t tableSize[] = { 4 , 16 , 256 , 65536 } ;
+
+    FILE * pFile = fopen( fileName , "w" ) ;
+    if( ( FILE * ) NULL == pFile )
+    {
+        return ;
+    }
+
+    switch( eHistSize )
+    {
+    case eHistDataSize_2bits :
+    case eHistDataSize_4bits :
+        fprintf( pFile , "  Data   Frequency\n" ) ;
+        for( uint32_t i = 0 ; i < tableSize[ eHistSize ] ; i++ )
+        {
+            fprintf( pFile , "    %1Xh  %10u\n" , pHist[ i ].data , pHist[ i ].frequency ) ;
+        }
+        break ;
+    case eHistDataSize_8bits :
+        fprintf( pFile , "  Data   Frequency | Data   Frequency | Data   Frequency | Data   Frequency\n" ) ;
+        for( uint32_t i = 0 ; i < ( tableSize[ eHistSize ] / 4 ) ; i++ )
+        {
+            fprintf( pFile , "   %02Xh  %10u |" , pHist[ i       ].data , pHist[ i       ].frequency ) ;
+            fprintf( pFile ,  "  %02Xh  %10u |" , pHist[ i +  64 ].data , pHist[ i +  64 ].frequency ) ;
+            fprintf( pFile ,  "  %02Xh  %10u |" , pHist[ i + 128 ].data , pHist[ i + 128 ].frequency ) ;
+            fprintf( pFile ,  "  %02Xh  %10u\n" , pHist[ i + 192 ].data , pHist[ i + 192 ].frequency ) ;
+        }
+        break ;
+    case eHistDataSize_16bits :
+        fprintf( pFile , "  Data   Frequency | Data   Frequency | Data   Frequency | Data   Frequency\n" ) ;
+        for( uint32_t i = 0 ; i < ( tableSize[ eHistSize ] / 4 ) ; i++ )
+        {
+            fprintf( pFile , "  %04Xh %10u |" , pHist[ i         ].data , pHist[ i         ].frequency ) ;
+            fprintf( pFile ,  " %04Xh %10u |" , pHist[ i + 16384 ].data , pHist[ i + 16384 ].frequency ) ;
+            fprintf( pFile ,  " %04Xh %10u |" , pHist[ i + 32768 ].data , pHist[ i + 32768 ].frequency ) ;
+            fprintf( pFile ,  " %04Xh %10u\n" , pHist[ i + 49152 ].data , pHist[ i + 49152 ].frequency ) ;
+        }
+        break ;
+    }
+
+    fclose( pFile ) ;
 }

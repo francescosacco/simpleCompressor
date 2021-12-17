@@ -20,7 +20,7 @@ compressor.o:
 	$(CC) -c $(PATH_SRC)/compressor.c -o $(PATH_OBJ)/compressor.o $(CFLAGS)
 
 all: SimpleCompressor.o SimpleHistogram.o compressor.o histogram.o FileManager.o
-	$(CC) -o SimpleCompressor.exe $(PATH_OBJ)/SimpleCompressor.o $(PATH_OBJ)/compressor.o $(PATH_OBJ)/histogram.o $(CFLAGS)
+	$(CC) -o SimpleCompressor.exe $(PATH_OBJ)/SimpleCompressor.o $(PATH_OBJ)/compressor.o $(PATH_OBJ)/histogram.o $(PATH_OBJ)/FileManager.o $(CFLAGS)
 	$(CC) -o SimpleHistogram.exe $(PATH_OBJ)/SimpleHistogram.o $(PATH_OBJ)/histogram.o $(PATH_OBJ)/FileManager.o $(CFLAGS)
 
 UnitTest_histogram.o:
